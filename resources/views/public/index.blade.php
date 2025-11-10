@@ -53,7 +53,17 @@
         @php
             $kesekretariatanApps = $applications->where('category', 'kesekretariatan');
             $kepaniteraanApps = $applications->where('category', 'kepaniteraan');
+
+            // Debug output
+            \Log::info('View debug', [
+                'total_apps' => $applications->count(),
+                'kesekretariatan_count' => $kesekretariatanApps->count(),
+                'kepaniteraan_count' => $kepaniteraanApps->count(),
+                'kepaniteraan_names' => $kepaniteraanApps->pluck('name')->toArray()
+            ]);
         @endphp
+
+        <!-- DEBUG: Total Apps: {{ $applications->count() }}, Kepaniteraan: {{ $kepaniteraanApps->count() }} -->
 
         <!-- Kesekretariatan Section -->
         <div class="mb-12">

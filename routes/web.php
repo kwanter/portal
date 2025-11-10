@@ -37,6 +37,13 @@ Route::middleware("auth")->group(function () {
 
     // User management routes
     Route::resource("users", UserController::class);
+    Route::post("users/{user}/verify", [UserController::class, "verify"])->name(
+        "users.verify",
+    );
+    Route::post("users/{user}/unverify", [
+        UserController::class,
+        "unverify",
+    ])->name("users.unverify");
 });
 
 require __DIR__ . "/auth.php";

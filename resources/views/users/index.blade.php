@@ -48,6 +48,7 @@
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Email</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Verification Status</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Applications Created</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Joined</th>
                                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
@@ -70,6 +71,17 @@
                                             <div class="text-sm text-gray-900 dark:text-gray-100">{{ $user->email }}</div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
+                                            @if($user->hasVerifiedEmail())
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
+                                                    ✓ Verified
+                                                </span>
+                                            @else
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100">
+                                                    ⚠ Not Verified
+                                                </span>
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm text-gray-900 dark:text-gray-100">
                                                 {{ $user->created_applications_count }}
                                             </div>
@@ -82,6 +94,21 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <a href="{{ route('users.show', $user) }}" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-3">View</a>
                                             <a href="{{ route('users.edit', $user) }}" class="text-yellow-600 dark:text-yellow-400 hover:text-yellow-900 dark:hover:text-yellow-300 mr-3">Edit</a>
+
+                                            @if($user->hasVerifiedEmail())
+                                                @if($user->id !== auth()->id())
+                                                    <form action="{{ route('users.unverify', $user) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to unverify this user?');">
+                                                        @csrf
+                                                        <button type="submit" class="text-orange-600 dark:text-orange-400 hover:text-orange-900 dark:hover:text-orange-300 mr-3">Unverify</button>
+                                                    </form>
+                                                @endif
+                                            @else
+                                                <form action="{{ route('users.verify', $user) }}" method="POST" class="inline-block">
+                                                    @csrf
+                                                    <button type="submit" class="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 mr-3">Verify</button>
+                                                </form>
+                                            @endif
+
                                             @if($user->id !== auth()->id())
                                                 <form action="{{ route('users.destroy', $user) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this user?');">
                                                     @csrf
@@ -93,7 +120,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                                        <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                                             No users found.
                                         </td>
                                     </tr>

@@ -12,22 +12,15 @@ class PublicController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Application::query();
-
-        // Filter by category
-        if (
-            $request->has("category") &&
-            in_array($request->category, ["kesekretariatan", "kepaniteraan"])
-        ) {
-            $query->category($request->category);
-        }
-
         // Search functionality
         if ($request->has("search") && $request->search != "") {
+            $query = Application::query();
             $query->search($request->search);
+            $applications = $query->latest()->get();
+        } else {
+            // Get all applications when not searching
+            $applications = Application::latest()->get();
         }
-
-        $applications = $query->latest()->paginate(12);
 
         $stats = [
             "total" => Application::count(),
@@ -40,6 +33,20 @@ class PublicController extends Controller
                 "kepaniteraan",
             )->count(),
         ];
+
+        // Debug logging
+        \Log::info("PublicController applications", [
+            "total_fetched" => $applications->count(),
+            "kesekretariatan_count" => $applications
+                ->where("category", "kesekretariatan")
+                ->count(),
+            "kepaniteraan_count" => $applications
+                ->where("category", "kepaniteraan")
+                ->count(),
+            "kepaniteraan_apps" => $applications
+                ->where("category", "kepaniteraan")
+                ->pluck("name"),
+        ]);
 
         return view("public.index", compact("applications", "stats"));
     }

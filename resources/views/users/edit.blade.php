@@ -20,7 +20,7 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('users.update', $user) }}" method="POST">
+                    <form action="{{ route('users.update', $user) }}" method="POST" id="userUpdateForm">
                         @csrf
                         @method('PUT')
 
@@ -52,7 +52,7 @@
                             <a href="{{ route('users.index') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
                                 Cancel
                             </a>
-                            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                            <button type="submit" id="submitButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                                 Update User
                             </button>
                         </div>
@@ -61,4 +61,30 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('userUpdateForm');
+            const submitButton = document.getElementById('submitButton');
+
+            if (form && submitButton) {
+                form.addEventListener('submit', function(e) {
+                    // Prevent double submission
+                    if (form.hasAttribute('data-submitting')) {
+                        e.preventDefault();
+                        return false;
+                    }
+
+                    // Mark form as submitting
+                    form.setAttribute('data-submitting', 'true');
+
+                    // Disable submit button and show loading state
+                    submitButton.disabled = true;
+                    submitButton.classList.remove('hover:bg-blue-700');
+                    submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+                    submitButton.innerHTML = 'Updating...';
+                });
+            }
+        });
+    </script>
 </x-app-layout>

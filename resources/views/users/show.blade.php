@@ -34,6 +34,38 @@
                         </div>
 
                         <div>
+                            <label class="block text-sm font-medium text-gray-500 dark:text-gray-400">Email Verification</label>
+                            <div class="mt-1 flex items-center gap-2">
+                                @if($user->hasVerifiedEmail())
+                                    <span class="px-3 py-1 inline-flex text-sm font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
+                                        ✓ Verified
+                                    </span>
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">
+                                        on {{ $user->email_verified_at->format('d M Y, H:i') }}
+                                    </span>
+                                    @if($user->id !== auth()->id())
+                                        <form action="{{ route('users.unverify', $user) }}" method="POST" class="inline-block ml-2" onsubmit="return confirm('Are you sure you want to unverify this user?');">
+                                            @csrf
+                                            <button type="submit" class="text-orange-600 dark:text-orange-400 hover:text-orange-900 dark:hover:text-orange-300 text-sm underline">
+                                                Unverify
+                                            </button>
+                                        </form>
+                                    @endif
+                                @else
+                                    <span class="px-3 py-1 inline-flex text-sm font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100">
+                                        ⚠ Not Verified
+                                    </span>
+                                    <form action="{{ route('users.verify', $user) }}" method="POST" class="inline-block ml-2">
+                                        @csrf
+                                        <button type="submit" class="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 text-sm underline">
+                                            Verify Now
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div>
                             <label class="block text-sm font-medium text-gray-500 dark:text-gray-400">Joined</label>
                             <p class="mt-1">{{ $user->created_at->format('d M Y, H:i') }}</p>
                         </div>

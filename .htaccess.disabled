@@ -1,0 +1,78 @@
+# ====================================================================
+# Root Directory Protection - Laravel Application Portal
+# ====================================================================
+# This file protects the root directory and all sensitive subdirectories
+# Only the /public directory should be accessible to web users
+
+# ----------------------------------------------------------------------
+# Deny All Access to Root Directory
+# ----------------------------------------------------------------------
+
+# Deny access to everything in the root by default
+Require all denied
+
+# ----------------------------------------------------------------------
+# Protect Sensitive Files
+# ----------------------------------------------------------------------
+
+# Protect .env files
+<FilesMatch "^\.env">
+    Require all denied
+</FilesMatch>
+
+# Protect composer files
+<FilesMatch "(composer\.(json|lock))">
+    Require all denied
+</FilesMatch>
+
+# Protect package manager files
+<FilesMatch "(package(-lock)?\.json|yarn\.lock|pnpm-lock\.yaml)">
+    Require all denied
+</FilesMatch>
+
+# Protect configuration files
+<FilesMatch "\.(ini|conf|config|htaccess|htpasswd)$">
+    Require all denied
+</FilesMatch>
+
+# Protect Laravel artisan and server files
+<FilesMatch "(artisan|server\.php|phpunit\.xml)">
+    Require all denied
+</FilesMatch>
+
+# Protect documentation and markdown files
+<FilesMatch "\.(md|markdown|txt|log)$">
+    Require all denied
+</FilesMatch>
+
+# Protect git and version control files
+<FilesMatch "^\.git">
+    Require all denied
+</FilesMatch>
+
+# Protect backup and temporary files
+<FilesMatch "\.(bak|backup|old|orig|save|swp|swo|tmp)$">
+    Require all denied
+</FilesMatch>
+
+# ----------------------------------------------------------------------
+# Information Disclosure Prevention
+# ----------------------------------------------------------------------
+
+# Disable directory browsing
+Options -Indexes
+
+# Disable server signature
+ServerSignature Off
+
+# ----------------------------------------------------------------------
+# Security Note
+# ----------------------------------------------------------------------
+# Your Apache VirtualHost DocumentRoot should point to the /public directory
+# Example: DocumentRoot /path/to/portal/public
+#
+# If you're seeing this file in your browser, your server is misconfigured!
+# The web server should ONLY serve files from the /public directory.
+#
+# Note: Directory-level protection for app/, config/, database/, etc. should be
+# configured in your Apache VirtualHost configuration, not here in .htaccess.

@@ -1,0 +1,56 @@
+# ====================================================================
+# Storage Directory Protection - Laravel Application Portal
+# ====================================================================
+# This directory contains uploaded files, logs, and cached data
+# MUST NOT be directly accessible via web
+
+# ----------------------------------------------------------------------
+# Deny All Direct Access
+# ----------------------------------------------------------------------
+
+Require all denied
+
+# ----------------------------------------------------------------------
+# Disable Directory Browsing
+# ----------------------------------------------------------------------
+
+Options -Indexes
+
+# ----------------------------------------------------------------------
+# Prevent PHP Execution
+# ----------------------------------------------------------------------
+
+# Disable PHP execution in all subdirectories
+<FilesMatch "\.php$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>
+
+# ----------------------------------------------------------------------
+# Block All File Types
+# ----------------------------------------------------------------------
+
+# Block direct access to all files in storage
+<FilesMatch ".*">
+    Require all denied
+</FilesMatch>
+
+# ----------------------------------------------------------------------
+# Security Note
+# ----------------------------------------------------------------------
+# Files in /storage should only be accessed through Laravel controllers
+# that implement proper authentication and authorization checks.
+#
+# To serve files from storage, use Laravel's Storage facade:
+# - Storage::download()
+# - Storage::url()
+# - response()->file()
+#
+# Never expose the /storage directory directly to the web!

@@ -153,4 +153,60 @@ class UserController extends Controller
                 ->with("error", "Failed to delete user: " . $e->getMessage());
         }
     }
+
+    /**
+     * Verify the user's email address.
+     */
+    public function verify(User $user)
+    {
+        if ($user->hasVerifiedEmail()) {
+            return redirect()
+                ->back()
+                ->with("info", "User email is already verified.");
+        }
+
+        try {
+            $user->markEmailAsVerified();
+
+            return redirect()
+                ->back()
+                ->with("success", "User email verified successfully.");
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with("error", "Failed to verify user: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Unverify the user's email address.
+     */
+    public function unverify(User $user)
+    {
+        if (!$user->hasVerifiedEmail()) {
+            return redirect()
+                ->back()
+                ->with("info", "User email is already unverified.");
+        }
+
+        // Prevent unverifying yourself
+        if ($user->id === auth()->id()) {
+            return redirect()
+                ->back()
+                ->with("error", "You cannot unverify your own email address.");
+        }
+
+        try {
+            $user->email_verified_at = null;
+            $user->save();
+
+            return redirect()
+                ->back()
+                ->with("success", "User email unverified successfully.");
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with("error", "Failed to unverify user: " . $e->getMessage());
+        }
+    }
 }

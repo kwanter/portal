@@ -56,16 +56,39 @@ class ApplicationController extends Controller
             "category" => "required|in:kesekretariatan,kepaniteraan",
         ]);
 
-        DB::beginTransaction();
+        // Check if user is authenticated
+        if (!auth()->check()) {
+            return redirect()
+                ->route("login")
+                ->with(
+                    "error",
+                    "You must be logged in to create an application.",
+                );
+        }
+
         try {
-            Application::create($validated);
-            DB::commit();
+            // Add created_by to the validated data
+            $validated["created_by"] = auth()->id();
+
+            $application = Application::create($validated);
+
+            \Log::info("Application created successfully", [
+                "application_id" => $application->id,
+                "name" => $application->name,
+                "created_by" => $application->created_by,
+            ]);
 
             return redirect()
                 ->route("applications.index")
                 ->with("success", "Application created successfully.");
         } catch (\Exception $e) {
-            DB::rollBack();
+            \Log::error("Application creation failed", [
+                "error" => $e->getMessage(),
+                "trace" => $e->getTraceAsString(),
+                "user" => auth()->id(),
+                "data" => $validated,
+            ]);
+
             return redirect()
                 ->back()
                 ->withInput()
