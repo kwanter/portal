@@ -25,7 +25,7 @@ class AppServiceProvider extends ServiceProvider
         // (min 12 + letters + numbers + symbols) fully addresses audit finding 3.7.
         // Re-add ->uncompromised() when prod egress to haveibeenpwned.com is confirmed.
         Password::defaults(
-            fn() => Password::min(12)->letters()->numbers()->symbols(),
+            fn () => Password::min(12)->letters()->numbers()->symbols(),
         );
     }
 }

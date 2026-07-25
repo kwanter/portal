@@ -14,7 +14,7 @@ class UserManagementTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->get(route("users.index"));
+        $response = $this->actingAs($user)->get(route('users.index'));
 
         $response->assertStatus(403);
     }
@@ -25,17 +25,17 @@ class UserManagementTest extends TestCase
         $target = User::factory()->create();
 
         $response = $this->actingAs($attacker)->put(
-            route("users.update", $target),
+            route('users.update', $target),
             [
-                "name" => "Hijacked Name",
-                "email" => "hijacked@example.com",
+                'name' => 'Hijacked Name',
+                'email' => 'hijacked@example.com',
             ],
         );
 
         $response->assertStatus(403);
-        $this->assertDatabaseMissing("users", [
-            "id" => $target->id,
-            "name" => "Hijacked Name",
+        $this->assertDatabaseMissing('users', [
+            'id' => $target->id,
+            'name' => 'Hijacked Name',
         ]);
     }
 
@@ -45,7 +45,7 @@ class UserManagementTest extends TestCase
         $target = User::factory()->unverified()->create();
 
         $response = $this->actingAs($attacker)->post(
-            route("users.verify", $target),
+            route('users.verify', $target),
         );
 
         $response->assertStatus(403);
@@ -56,10 +56,10 @@ class UserManagementTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        $response = $this->actingAs($admin)->get(route("users.index"));
+        $response = $this->actingAs($admin)->get(route('users.index'));
 
         $response->assertStatus(200);
-        $response->assertViewIs("users.index");
+        $response->assertViewIs('users.index');
     }
 
     public function test_admin_can_verify_user(): void
@@ -68,7 +68,7 @@ class UserManagementTest extends TestCase
         $target = User::factory()->unverified()->create();
 
         $response = $this->actingAs($admin)->post(
-            route("users.verify", $target),
+            route('users.verify', $target),
         );
 
         $response->assertRedirect();

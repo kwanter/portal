@@ -28,23 +28,23 @@ class ApplicationController extends Controller
 
         // Filter by category
         if (
-            $request->has("category") &&
-            in_array($request->category, ["kesekretariatan", "kepaniteraan"])
+            $request->has('category') &&
+            in_array($request->category, ['kesekretariatan', 'kepaniteraan'])
         ) {
             $query->category($request->category);
         }
 
         // Search functionality
-        if ($request->has("search") && $request->search != "") {
+        if ($request->has('search') && $request->search != '') {
             $query->search($request->search);
         }
 
         $applications = $query
-            ->with(["creator", "updater"])
+            ->with(['creator', 'updater'])
             ->latest()
             ->paginate(15);
 
-        return view("applications.index", compact("applications"));
+        return view('applications.index', compact('applications'));
     }
 
     /**
@@ -52,7 +52,7 @@ class ApplicationController extends Controller
      */
     public function create()
     {
-        return view("applications.create");
+        return view('applications.create');
     }
 
     /**
@@ -61,51 +61,51 @@ class ApplicationController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            "name" => "required|string|max:255|unique:applications,name",
-            "url" => "required|url|max:500",
-            "description" => "required|string|max:2000",
-            "category" => "required|in:kesekretariatan,kepaniteraan",
+            'name' => 'required|string|max:255|unique:applications,name',
+            'url' => 'required|url|max:500',
+            'description' => 'required|string|max:2000',
+            'category' => 'required|in:kesekretariatan,kepaniteraan',
         ]);
 
         // Check if user is authenticated
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return redirect()
-                ->route("login")
+                ->route('login')
                 ->with(
-                    "error",
-                    "You must be logged in to create an application.",
+                    'error',
+                    'You must be logged in to create an application.',
                 );
         }
 
         try {
             // Add created_by to the validated data
-            $validated["created_by"] = auth()->id();
+            $validated['created_by'] = auth()->id();
 
             $application = Application::create($validated);
 
-            Log::info("Application created successfully", [
-                "application_id" => $application->id,
-                "name" => $application->name,
-                "created_by" => $application->created_by,
+            Log::info('Application created successfully', [
+                'application_id' => $application->id,
+                'name' => $application->name,
+                'created_by' => $application->created_by,
             ]);
 
             return redirect()
-                ->route("applications.index")
-                ->with("success", "Application created successfully.");
+                ->route('applications.index')
+                ->with('success', 'Application created successfully.');
         } catch (\Exception $e) {
-            Log::error("Application creation failed", [
-                "error" => $e->getMessage(),
-                "trace" => $e->getTraceAsString(),
-                "user" => auth()->id(),
-                "data" => $validated,
+            Log::error('Application creation failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user' => auth()->id(),
+                'data' => $validated,
             ]);
 
             return redirect()
                 ->back()
                 ->withInput()
                 ->with(
-                    "error",
-                    "Failed to create application. Please try again.",
+                    'error',
+                    'Failed to create application. Please try again.',
                 );
         }
     }
@@ -117,12 +117,12 @@ class ApplicationController extends Controller
     {
         // Audit trail (IPs, user agents, change history) is admin-only.
         if (auth()->user()->is_admin) {
-            $application->load(["creator", "updater", "deleter", "audits.user"]);
+            $application->load(['creator', 'updater', 'deleter', 'audits.user']);
         } else {
-            $application->load(["creator"]);
+            $application->load(['creator']);
         }
 
-        return view("applications.show", compact("application"));
+        return view('applications.show', compact('application'));
     }
 
     /**
@@ -130,7 +130,7 @@ class ApplicationController extends Controller
      */
     public function edit(Application $application)
     {
-        return view("applications.edit", compact("application"));
+        return view('applications.edit', compact('application'));
     }
 
     /**
@@ -139,16 +139,16 @@ class ApplicationController extends Controller
     public function update(Request $request, Application $application)
     {
         $validated = $request->validate([
-            "name" => "required|string|max:255",
-            "url" => "required|url|max:500",
-            "description" => "required|string|max:2000",
-            "category" => "required|in:kesekretariatan,kepaniteraan",
+            'name' => 'required|string|max:255',
+            'url' => 'required|url|max:500',
+            'description' => 'required|string|max:2000',
+            'category' => 'required|in:kesekretariatan,kepaniteraan',
         ]);
 
         // Check unique name (excluding current application)
         if ($request->name !== $application->name) {
-            $exists = Application::where("name", $request->name)
-                ->where("id", "!=", $application->id)
+            $exists = Application::where('name', $request->name)
+                ->where('id', '!=', $application->id)
                 ->exists();
 
             if ($exists) {
@@ -156,36 +156,35 @@ class ApplicationController extends Controller
                     ->back()
                     ->withInput()
                     ->withErrors([
-                        "name" =>
-                        "The application name has already been taken.",
+                        'name' => 'The application name has already been taken.',
                     ]);
             }
         }
 
         try {
-            $application->name = $validated["name"];
-            $application->url = $validated["url"];
-            $application->description = $validated["description"];
-            $application->category = $validated["category"];
+            $application->name = $validated['name'];
+            $application->url = $validated['url'];
+            $application->description = $validated['description'];
+            $application->category = $validated['category'];
             $application->updated_by = auth()->id();
             $application->save();
 
             return redirect()
-                ->route("applications.index")
-                ->with("success", "Application updated successfully.");
+                ->route('applications.index')
+                ->with('success', 'Application updated successfully.');
         } catch (\Exception $e) {
-            Log::error("Application update failed", [
-                "application_id" => $application->id,
-                "error" => $e->getMessage(),
-                "trace" => $e->getTraceAsString(),
+            Log::error('Application update failed', [
+                'application_id' => $application->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return redirect()
                 ->back()
                 ->withInput()
                 ->with(
-                    "error",
-                    "Failed to update application. Please try again.",
+                    'error',
+                    'Failed to update application. Please try again.',
                 );
         }
     }
@@ -201,20 +200,20 @@ class ApplicationController extends Controller
             DB::commit();
 
             return redirect()
-                ->route("applications.index")
-                ->with("success", "Application deleted successfully.");
+                ->route('applications.index')
+                ->with('success', 'Application deleted successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("Application deletion failed", [
-                "application_id" => $application->id,
-                "error" => $e->getMessage(),
+            Log::error('Application deletion failed', [
+                'application_id' => $application->id,
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()
                 ->back()
                 ->with(
-                    "error",
-                    "Failed to delete application. Please try again.",
+                    'error',
+                    'Failed to delete application. Please try again.',
                 );
         }
     }
@@ -225,7 +224,7 @@ class ApplicationController extends Controller
     public function restore($id)
     {
         $application = Application::withTrashed()->findOrFail($id);
-        $this->authorize("restore", $application);
+        $this->authorize('restore', $application);
 
         DB::beginTransaction();
         try {
@@ -233,20 +232,20 @@ class ApplicationController extends Controller
             DB::commit();
 
             return redirect()
-                ->route("applications.index")
-                ->with("success", "Application restored successfully.");
+                ->route('applications.index')
+                ->with('success', 'Application restored successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("Application restore failed", [
-                "application_id" => $id,
-                "error" => $e->getMessage(),
+            Log::error('Application restore failed', [
+                'application_id' => $id,
+                'error' => $e->getMessage(),
             ]);
 
             return redirect()
                 ->back()
                 ->with(
-                    "error",
-                    "Failed to restore application. Please try again.",
+                    'error',
+                    'Failed to restore application. Please try again.',
                 );
         }
     }

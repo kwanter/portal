@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,22 +12,22 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasUuids, SoftDeletes;
+    /** @use HasFactory<UserFactory> */
+    use HasFactory, HasUuids, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
      */
-    protected $fillable = ["name", "email", "password", "is_admin"];
+    protected $fillable = ['name', 'email', 'password', 'is_admin'];
 
     /**
      * The attributes that should be hidden for serialization.
      *
      * @var list<string>
      */
-    protected $hidden = ["password", "remember_token"];
+    protected $hidden = ['password', 'remember_token'];
 
     /**
      * Get the attributes that should be cast.
@@ -36,9 +37,9 @@ class User extends Authenticatable implements MustVerifyEmail
     protected function casts(): array
     {
         return [
-            "email_verified_at" => "datetime",
-            "password" => "hashed",
-            "is_admin" => "boolean",
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+            'is_admin' => 'boolean',
         ];
     }
 
@@ -47,7 +48,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function createdApplications()
     {
-        return $this->hasMany(Application::class, "created_by");
+        return $this->hasMany(Application::class, 'created_by');
     }
 
     /**
@@ -55,7 +56,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function updatedApplications()
     {
-        return $this->hasMany(Application::class, "updated_by");
+        return $this->hasMany(Application::class, 'updated_by');
     }
 
     /**
@@ -63,6 +64,6 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function deletedApplications()
     {
-        return $this->hasMany(Application::class, "deleted_by");
+        return $this->hasMany(Application::class, 'deleted_by');
     }
 }

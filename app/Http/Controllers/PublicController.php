@@ -13,7 +13,7 @@ class PublicController extends Controller
     public function index(Request $request)
     {
         // Search functionality
-        if ($request->has("search") && $request->search != "") {
+        if ($request->has('search') && $request->search != '') {
             $query = Application::query();
             $query->search($request->search);
             $applications = $query->latest()->get();
@@ -23,31 +23,31 @@ class PublicController extends Controller
         }
 
         $stats = [
-            "total" => Application::count(),
-            "kesekretariatan" => Application::where(
-                "category",
-                "kesekretariatan",
+            'total' => Application::count(),
+            'kesekretariatan' => Application::where(
+                'category',
+                'kesekretariatan',
             )->count(),
-            "kepaniteraan" => Application::where(
-                "category",
-                "kepaniteraan",
+            'kepaniteraan' => Application::where(
+                'category',
+                'kepaniteraan',
             )->count(),
         ];
 
         // Debug logging
-        \Log::info("PublicController applications", [
-            "total_fetched" => $applications->count(),
-            "kesekretariatan_count" => $applications
-                ->where("category", "kesekretariatan")
+        \Log::info('PublicController applications', [
+            'total_fetched' => $applications->count(),
+            'kesekretariatan_count' => $applications
+                ->where('category', 'kesekretariatan')
                 ->count(),
-            "kepaniteraan_count" => $applications
-                ->where("category", "kepaniteraan")
+            'kepaniteraan_count' => $applications
+                ->where('category', 'kepaniteraan')
                 ->count(),
-            "kepaniteraan_apps" => $applications
-                ->where("category", "kepaniteraan")
-                ->pluck("name"),
+            'kepaniteraan_apps' => $applications
+                ->where('category', 'kepaniteraan')
+                ->pluck('name'),
         ]);
 
-        return view("public.index", compact("applications", "stats"));
+        return view('public.index', compact('applications', 'stats'));
     }
 }

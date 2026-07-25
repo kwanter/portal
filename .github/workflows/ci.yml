@@ -1,0 +1,152 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel in-progress runs for the same branch/PR.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# CRITICAL: host/.env.example values (SESSION_DRIVER=database, CACHE_STORE=database,
+# QUEUE_CONNECTION=database, DB_CONNECTION=mysql) MUST be overridden at the job
+# level. Laravel's env() reads OS env first and would otherwise ignore phpunit.xml.
+# See vault learning: laravel-test-host-env-override.
+env:
+  APP_ENV: testing
+  APP_DEBUG: "true"
+  DB_CONNECTION: sqlite
+  DB_DATABASE: ":memory:"
+  CACHE_STORE: array
+  SESSION_DRIVER: array
+  QUEUE_CONNECTION: sync
+  MAIL_MAILER: array
+  BROADCAST_CONNECTION: "null"
+  BCRYPT_ROUNDS: "4"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Backend: PHPUnit + Pint + composer audit
+  # ---------------------------------------------------------------------------
+  test:
+    name: Tests (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ["8.2", "8.3"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, pdo_sqlite, sqlite3, bcmath, ctype, fileinfo, json, openssl, tokenizer, xml, curl
+          coverage: none
+          tools: composer:v2
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-${{ matrix.php }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress --optimize-autoloader
+
+      - name: Prepare application
+        run: |
+          cp .env.example .env
+          php artisan key:generate --ansi --force
+          # Ensure the generated .env cannot override the job-level env block above.
+          # phpunit.xml + job env are the source of truth for tests.
+
+      - name: Install Node dependencies
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: npm ci
+        run: npm ci
+
+      # Feature tests render Blade views that call @vite — without a build
+      # artifact Laravel throws ViteManifestNotFoundException.
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Run Laravel Pint
+        run: vendor/bin/pint --test
+
+      - name: Composer security audit
+        run: composer audit --locked --no-interaction
+
+      - name: Run test suite
+        run: php artisan test --ansi
+
+  # ---------------------------------------------------------------------------
+  # Frontend: npm audit (prod) + Vite production build
+  # ---------------------------------------------------------------------------
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: npm audit (production deps only)
+        # axios/vite/etc live under devDependencies and are compile-time only.
+        # Production audit focuses on runtime shipped packages (none currently).
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Production build
+        run: npm run build
+
+      - name: Verify Vite manifest
+        run: test -f public/build/manifest.json
+
+  # ---------------------------------------------------------------------------
+  # Gate: all jobs must pass
+  # ---------------------------------------------------------------------------
+  ci-success:
+    name: CI Success
+    if: always()
+    needs: [test, frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check job results
+        run: |
+          if [[ "${{ needs.test.result }}" != "success" ]]; then
+            echo "test job failed: ${{ needs.test.result }}"
+            exit 1
+          fi
+          if [[ "${{ needs.frontend.result }}" != "success" ]]; then
+            echo "frontend job failed: ${{ needs.frontend.result }}"
+            exit 1
+          fi
+          echo "All CI jobs passed."

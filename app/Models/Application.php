@@ -11,7 +11,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class Application extends Model implements Auditable
 {
-    use HasFactory, HasUuids, SoftDeletes, \OwenIt\Auditing\Auditable;
+    use HasFactory, HasUuids, \OwenIt\Auditing\Auditable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -19,10 +19,10 @@ class Application extends Model implements Auditable
      * @var array<int, string>
      */
     protected $fillable = [
-        "name",
-        "url",
-        "description",
-        "category",
+        'name',
+        'url',
+        'description',
+        'category',
     ];
 
     /**
@@ -31,9 +31,9 @@ class Application extends Model implements Auditable
      * @var array<string, string>
      */
     protected $casts = [
-        "created_at" => "datetime",
-        "updated_at" => "datetime",
-        "deleted_at" => "datetime",
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     /**
@@ -59,7 +59,7 @@ class Application extends Model implements Auditable
 
         // Automatically set deleted_by on soft delete
         static::deleting(function ($model) {
-            if (Auth::check() && !$model->isForceDeleting()) {
+            if (Auth::check() && ! $model->isForceDeleting()) {
                 $model->deleted_by = Auth::id();
                 $model->save();
             }
@@ -71,7 +71,7 @@ class Application extends Model implements Auditable
      */
     public function creator()
     {
-        return $this->belongsTo(User::class, "created_by");
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     /**
@@ -79,7 +79,7 @@ class Application extends Model implements Auditable
      */
     public function updater()
     {
-        return $this->belongsTo(User::class, "updated_by");
+        return $this->belongsTo(User::class, 'updated_by');
     }
 
     /**
@@ -87,7 +87,7 @@ class Application extends Model implements Auditable
      */
     public function deleter()
     {
-        return $this->belongsTo(User::class, "deleted_by");
+        return $this->belongsTo(User::class, 'deleted_by');
     }
 
     /**
@@ -95,7 +95,7 @@ class Application extends Model implements Auditable
      */
     public function scopeCategory($query, $category)
     {
-        return $query->where("category", $category);
+        return $query->where('category', $category);
     }
 
     /**
@@ -105,9 +105,9 @@ class Application extends Model implements Auditable
     {
         return $query->where(function ($query) use ($search) {
             $query
-                ->where("name", "like", "%{$search}%")
-                ->orWhere("url", "like", "%{$search}%")
-                ->orWhere("description", "like", "%{$search}%");
+                ->where('name', 'like', "%{$search}%")
+                ->orWhere('url', 'like', "%{$search}%")
+                ->orWhere('description', 'like', "%{$search}%");
         });
     }
 }

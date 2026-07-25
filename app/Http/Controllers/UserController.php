@@ -27,22 +27,22 @@ class UserController extends Controller
         $query = User::query();
 
         // Search functionality
-        if ($request->has("search") && $request->search != "") {
+        if ($request->has('search') && $request->search != '') {
             $query->where(function ($q) use ($request) {
-                $q->where("name", "like", "%{$request->search}%")->orWhere(
-                    "email",
-                    "like",
+                $q->where('name', 'like', "%{$request->search}%")->orWhere(
+                    'email',
+                    'like',
                     "%{$request->search}%",
                 );
             });
         }
 
         $users = $query
-            ->withCount("createdApplications")
+            ->withCount('createdApplications')
             ->latest()
             ->paginate(15);
 
-        return view("users.index", compact("users"));
+        return view('users.index', compact('users'));
     }
 
     /**
@@ -50,7 +50,7 @@ class UserController extends Controller
      */
     public function create()
     {
-        return view("users.create");
+        return view('users.create');
     }
 
     /**
@@ -59,31 +59,31 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            "name" => "required|string|max:255",
-            "email" => "required|string|email|max:255|unique:users",
-            "password" => ["required", "confirmed", Rules\Password::defaults()],
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         try {
             User::create([
-                "name" => $validated["name"],
-                "email" => $validated["email"],
-                "password" => Hash::make($validated["password"]),
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
             ]);
 
             return redirect()
-                ->route("users.index")
-                ->with("success", "User created successfully.");
+                ->route('users.index')
+                ->with('success', 'User created successfully.');
         } catch (\Exception $e) {
-            Log::error("User creation failed", [
-                "error" => $e->getMessage(),
-                "user" => auth()->id(),
+            Log::error('User creation failed', [
+                'error' => $e->getMessage(),
+                'user' => auth()->id(),
             ]);
 
             return redirect()
                 ->back()
                 ->withInput()
-                ->with("error", "Failed to create user. Please try again.");
+                ->with('error', 'Failed to create user. Please try again.');
         }
     }
 
@@ -92,9 +92,9 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        $user->load(["createdApplications", "updatedApplications"]);
+        $user->load(['createdApplications', 'updatedApplications']);
 
-        return view("users.show", compact("user"));
+        return view('users.show', compact('user'));
     }
 
     /**
@@ -102,7 +102,7 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        return view("users.edit", compact("user"));
+        return view('users.edit', compact('user'));
     }
 
     /**
@@ -111,41 +111,40 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
-            "name" => "required|string|max:255",
-            "email" =>
-            "required|string|email|max:255|unique:users,email," .
-                $user->id .
-                ",id",
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,'.
+                $user->id.
+                ',id',
         ]);
 
         // Check if password is being updated
-        if ($request->filled("password")) {
+        if ($request->filled('password')) {
             $request->validate([
-                "password" => [
-                    "required",
-                    "confirmed",
+                'password' => [
+                    'required',
+                    'confirmed',
                     Rules\Password::defaults(),
                 ],
             ]);
-            $validated["password"] = Hash::make($request->password);
+            $validated['password'] = Hash::make($request->password);
         }
 
         try {
             $user->update($validated);
 
             return redirect()
-                ->route("users.index")
-                ->with("success", "User updated successfully.");
+                ->route('users.index')
+                ->with('success', 'User updated successfully.');
         } catch (\Exception $e) {
-            Log::error("User update failed", [
-                "error" => $e->getMessage(),
-                "user_id" => $user->id,
+            Log::error('User update failed', [
+                'error' => $e->getMessage(),
+                'user_id' => $user->id,
             ]);
 
             return redirect()
                 ->back()
                 ->withInput()
-                ->with("error", "Failed to update user. Please try again.");
+                ->with('error', 'Failed to update user. Please try again.');
         }
     }
 
@@ -158,24 +157,24 @@ class UserController extends Controller
         if ($user->id === auth()->id()) {
             return redirect()
                 ->back()
-                ->with("error", "You cannot delete your own account.");
+                ->with('error', 'You cannot delete your own account.');
         }
 
         try {
             $user->delete();
 
             return redirect()
-                ->route("users.index")
-                ->with("success", "User deleted successfully.");
+                ->route('users.index')
+                ->with('success', 'User deleted successfully.');
         } catch (\Exception $e) {
-            Log::error("User deletion failed", [
-                "error" => $e->getMessage(),
-                "user_id" => $user->id,
+            Log::error('User deletion failed', [
+                'error' => $e->getMessage(),
+                'user_id' => $user->id,
             ]);
 
             return redirect()
                 ->back()
-                ->with("error", "Failed to delete user. Please try again.");
+                ->with('error', 'Failed to delete user. Please try again.');
         }
     }
 
@@ -184,12 +183,12 @@ class UserController extends Controller
      */
     public function verify(User $user)
     {
-        $this->authorize("verify", $user);
+        $this->authorize('verify', $user);
 
         if ($user->hasVerifiedEmail()) {
             return redirect()
                 ->back()
-                ->with("info", "User email is already verified.");
+                ->with('info', 'User email is already verified.');
         }
 
         try {
@@ -197,16 +196,16 @@ class UserController extends Controller
 
             return redirect()
                 ->back()
-                ->with("success", "User email verified successfully.");
+                ->with('success', 'User email verified successfully.');
         } catch (\Exception $e) {
-            Log::error("User verification failed", [
-                "error" => $e->getMessage(),
-                "user_id" => $user->id,
+            Log::error('User verification failed', [
+                'error' => $e->getMessage(),
+                'user_id' => $user->id,
             ]);
 
             return redirect()
                 ->back()
-                ->with("error", "Failed to verify user. Please try again.");
+                ->with('error', 'Failed to verify user. Please try again.');
         }
     }
 
@@ -215,19 +214,19 @@ class UserController extends Controller
      */
     public function unverify(User $user)
     {
-        $this->authorize("unverify", $user);
+        $this->authorize('unverify', $user);
 
-        if (!$user->hasVerifiedEmail()) {
+        if (! $user->hasVerifiedEmail()) {
             return redirect()
                 ->back()
-                ->with("info", "User email is already unverified.");
+                ->with('info', 'User email is already unverified.');
         }
 
         // Prevent unverifying yourself
         if ($user->id === auth()->id()) {
             return redirect()
                 ->back()
-                ->with("error", "You cannot unverify your own email address.");
+                ->with('error', 'You cannot unverify your own email address.');
         }
 
         try {
@@ -236,16 +235,16 @@ class UserController extends Controller
 
             return redirect()
                 ->back()
-                ->with("success", "User email unverified successfully.");
+                ->with('success', 'User email unverified successfully.');
         } catch (\Exception $e) {
-            Log::error("User unverification failed", [
-                "error" => $e->getMessage(),
-                "user_id" => $user->id,
+            Log::error('User unverification failed', [
+                'error' => $e->getMessage(),
+                'user_id' => $user->id,
             ]);
 
             return redirect()
                 ->back()
-                ->with("error", "Failed to unverify user. Please try again.");
+                ->with('error', 'Failed to unverify user. Please try again.');
         }
     }
 }
