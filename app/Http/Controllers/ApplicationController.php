@@ -5,9 +5,20 @@ namespace App\Http\Controllers;
 use App\Models\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ApplicationController extends Controller
 {
+    /**
+     * Resource actions are authorized via ApplicationPolicy
+     * (viewAny/create open to all authed; view/update/delete/restore
+     * restricted to creator or admin).
+     */
+    public function __construct()
+    {
+        $this->authorizeResource(Application::class);
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -72,7 +83,7 @@ class ApplicationController extends Controller
 
             $application = Application::create($validated);
 
-            \Log::info("Application created successfully", [
+            Log::info("Application created successfully", [
                 "application_id" => $application->id,
                 "name" => $application->name,
                 "created_by" => $application->created_by,
@@ -82,7 +93,7 @@ class ApplicationController extends Controller
                 ->route("applications.index")
                 ->with("success", "Application created successfully.");
         } catch (\Exception $e) {
-            \Log::error("Application creation failed", [
+            Log::error("Application creation failed", [
                 "error" => $e->getMessage(),
                 "trace" => $e->getTraceAsString(),
                 "user" => auth()->id(),
@@ -94,7 +105,7 @@ class ApplicationController extends Controller
                 ->withInput()
                 ->with(
                     "error",
-                    "Failed to create application: " . $e->getMessage(),
+                    "Failed to create application. Please try again.",
                 );
         }
     }
@@ -104,7 +115,12 @@ class ApplicationController extends Controller
      */
     public function show(Application $application)
     {
-        $application->load(["creator", "updater", "deleter", "audits.user"]);
+        // Audit trail (IPs, user agents, change history) is admin-only.
+        if (auth()->user()->is_admin) {
+            $application->load(["creator", "updater", "deleter", "audits.user"]);
+        } else {
+            $application->load(["creator"]);
+        }
 
         return view("applications.show", compact("application"));
     }
@@ -141,7 +157,7 @@ class ApplicationController extends Controller
                     ->withInput()
                     ->withErrors([
                         "name" =>
-                            "The application name has already been taken.",
+                        "The application name has already been taken.",
                     ]);
             }
         }
@@ -158,7 +174,7 @@ class ApplicationController extends Controller
                 ->route("applications.index")
                 ->with("success", "Application updated successfully.");
         } catch (\Exception $e) {
-            \Log::error("Application update failed", [
+            Log::error("Application update failed", [
                 "application_id" => $application->id,
                 "error" => $e->getMessage(),
                 "trace" => $e->getTraceAsString(),
@@ -169,7 +185,7 @@ class ApplicationController extends Controller
                 ->withInput()
                 ->with(
                     "error",
-                    "Failed to update application: " . $e->getMessage(),
+                    "Failed to update application. Please try again.",
                 );
         }
     }
@@ -189,11 +205,16 @@ class ApplicationController extends Controller
                 ->with("success", "Application deleted successfully.");
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error("Application deletion failed", [
+                "application_id" => $application->id,
+                "error" => $e->getMessage(),
+            ]);
+
             return redirect()
                 ->back()
                 ->with(
                     "error",
-                    "Failed to delete application: " . $e->getMessage(),
+                    "Failed to delete application. Please try again.",
                 );
         }
     }
@@ -203,9 +224,11 @@ class ApplicationController extends Controller
      */
     public function restore($id)
     {
+        $application = Application::withTrashed()->findOrFail($id);
+        $this->authorize("restore", $application);
+
         DB::beginTransaction();
         try {
-            $application = Application::withTrashed()->findOrFail($id);
             $application->restore();
             DB::commit();
 
@@ -214,11 +237,16 @@ class ApplicationController extends Controller
                 ->with("success", "Application restored successfully.");
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error("Application restore failed", [
+                "application_id" => $id,
+                "error" => $e->getMessage(),
+            ]);
+
             return redirect()
                 ->back()
                 ->with(
                     "error",
-                    "Failed to restore application: " . $e->getMessage(),
+                    "Failed to restore application. Please try again.",
                 );
         }
     }

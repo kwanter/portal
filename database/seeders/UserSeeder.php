@@ -20,6 +20,7 @@ class UserSeeder extends Seeder
             "email" => "pn.tanahgrogot@gmail.com",
             "password" => Hash::make("pnkelas2"),
             "email_verified_at" => now(),
+            "is_admin" => true,
         ]);
 
         // Create test user for Kesekretariatan

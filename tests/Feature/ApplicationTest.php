@@ -199,4 +199,56 @@ class ApplicationTest extends TestCase
         $application = Application::where("name", "Test Application")->first();
         $this->assertEquals($this->user->id, $application->created_by);
     }
+
+    public function test_non_owner_cannot_update_application(): void
+    {
+        $owner = User::factory()->create();
+        $application = Application::factory()->create([
+            "created_by" => $owner->id,
+        ]);
+
+        $other = User::factory()->create();
+
+        $response = $this->actingAs($other)->put(
+            route("applications.update", $application),
+            [
+                "name" => "Hijacked",
+                "url" => "https://evil.example.com",
+                "description" => "taken over",
+                "category" => "kepaniteraan",
+            ],
+        );
+
+        $response->assertStatus(403);
+        $this->assertDatabaseMissing("applications", [
+            "id" => $application->id,
+            "name" => "Hijacked",
+        ]);
+    }
+
+    public function test_admin_can_update_any_application(): void
+    {
+        $owner = User::factory()->create();
+        $application = Application::factory()->create([
+            "created_by" => $owner->id,
+        ]);
+
+        $admin = User::factory()->admin()->create();
+
+        $response = $this->actingAs($admin)->put(
+            route("applications.update", $application),
+            [
+                "name" => "Admin Edited",
+                "url" => "https://admin.example.com",
+                "description" => "admin override",
+                "category" => "kepaniteraan",
+            ],
+        );
+
+        $response->assertRedirect(route("applications.index"));
+        $this->assertDatabaseHas("applications", [
+            "id" => $application->id,
+            "name" => "Admin Edited",
+        ]);
+    }
 }

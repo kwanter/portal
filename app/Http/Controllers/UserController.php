@@ -5,10 +5,20 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules;
 
 class UserController extends Controller
 {
+    /**
+     * All user-management actions require an administrator.
+     * Users manage their own profile via ProfileController.
+     */
+    public function __construct()
+    {
+        $this->authorizeResource(User::class);
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -65,10 +75,15 @@ class UserController extends Controller
                 ->route("users.index")
                 ->with("success", "User created successfully.");
         } catch (\Exception $e) {
+            Log::error("User creation failed", [
+                "error" => $e->getMessage(),
+                "user" => auth()->id(),
+            ]);
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with("error", "Failed to create user: " . $e->getMessage());
+                ->with("error", "Failed to create user. Please try again.");
         }
     }
 
@@ -98,7 +113,7 @@ class UserController extends Controller
         $validated = $request->validate([
             "name" => "required|string|max:255",
             "email" =>
-                "required|string|email|max:255|unique:users,email," .
+            "required|string|email|max:255|unique:users,email," .
                 $user->id .
                 ",id",
         ]);
@@ -122,10 +137,15 @@ class UserController extends Controller
                 ->route("users.index")
                 ->with("success", "User updated successfully.");
         } catch (\Exception $e) {
+            Log::error("User update failed", [
+                "error" => $e->getMessage(),
+                "user_id" => $user->id,
+            ]);
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with("error", "Failed to update user: " . $e->getMessage());
+                ->with("error", "Failed to update user. Please try again.");
         }
     }
 
@@ -148,9 +168,14 @@ class UserController extends Controller
                 ->route("users.index")
                 ->with("success", "User deleted successfully.");
         } catch (\Exception $e) {
+            Log::error("User deletion failed", [
+                "error" => $e->getMessage(),
+                "user_id" => $user->id,
+            ]);
+
             return redirect()
                 ->back()
-                ->with("error", "Failed to delete user: " . $e->getMessage());
+                ->with("error", "Failed to delete user. Please try again.");
         }
     }
 
@@ -159,6 +184,8 @@ class UserController extends Controller
      */
     public function verify(User $user)
     {
+        $this->authorize("verify", $user);
+
         if ($user->hasVerifiedEmail()) {
             return redirect()
                 ->back()
@@ -172,9 +199,14 @@ class UserController extends Controller
                 ->back()
                 ->with("success", "User email verified successfully.");
         } catch (\Exception $e) {
+            Log::error("User verification failed", [
+                "error" => $e->getMessage(),
+                "user_id" => $user->id,
+            ]);
+
             return redirect()
                 ->back()
-                ->with("error", "Failed to verify user: " . $e->getMessage());
+                ->with("error", "Failed to verify user. Please try again.");
         }
     }
 
@@ -183,6 +215,8 @@ class UserController extends Controller
      */
     public function unverify(User $user)
     {
+        $this->authorize("unverify", $user);
+
         if (!$user->hasVerifiedEmail()) {
             return redirect()
                 ->back()
@@ -204,9 +238,14 @@ class UserController extends Controller
                 ->back()
                 ->with("success", "User email unverified successfully.");
         } catch (\Exception $e) {
+            Log::error("User unverification failed", [
+                "error" => $e->getMessage(),
+                "user_id" => $user->id,
+            ]);
+
             return redirect()
                 ->back()
-                ->with("error", "Failed to unverify user: " . $e->getMessage());
+                ->with("error", "Failed to unverify user. Please try again.");
         }
     }
 }

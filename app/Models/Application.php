@@ -23,9 +23,6 @@ class Application extends Model implements Auditable
         "url",
         "description",
         "category",
-        "created_by",
-        "updated_by",
-        "deleted_by",
     ];
 
     /**

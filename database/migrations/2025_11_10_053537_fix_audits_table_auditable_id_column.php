@@ -7,6 +7,12 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     /**
      * Run the migrations.
+     *
+     * Convert auditable_id from BIGINT to UUID. morphs() created the
+     * auditable_type/auditable_id columns plus a compound index named
+     * audits_auditable_type_auditable_id_index. dropMorphs() removes both
+     * columns AND the index correctly (SQLite errors if the index survives a
+     * dropColumn). uuidMorphs() recreates them with auditable_id as UUID.
      */
     public function up(): void
     {
@@ -19,18 +25,8 @@ return new class extends Migration {
         Schema::connection($connection)->table($table, function (
             Blueprint $table,
         ) {
-            // Drop the existing auditable_id column and recreate it as UUID
-            $table->dropColumn("auditable_id");
-        });
-
-        Schema::connection($connection)->table($table, function (
-            Blueprint $table,
-        ) {
-            // Add auditable_id back as UUID type
-            $table->uuid("auditable_id")->after("auditable_type");
-
-            // Recreate the index
-            $table->index(["auditable_id", "auditable_type"]);
+            $table->dropMorphs("auditable");
+            $table->uuidMorphs("auditable");
         });
     }
 
@@ -48,18 +44,8 @@ return new class extends Migration {
         Schema::connection($connection)->table($table, function (
             Blueprint $table,
         ) {
-            // Drop the UUID column
-            $table->dropColumn("auditable_id");
-        });
-
-        Schema::connection($connection)->table($table, function (
-            Blueprint $table,
-        ) {
-            // Restore the original BIGINT column
-            $table->unsignedBigInteger("auditable_id")->after("auditable_type");
-
-            // Recreate the index
-            $table->index(["auditable_id", "auditable_type"]);
+            $table->dropMorphs("auditable");
+            $table->morphs("auditable");
         });
     }
 };
