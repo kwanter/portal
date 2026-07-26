@@ -941,3 +941,4 @@ For questions, issues, or support:
 **Built with Laravel** | **Powered by PHP** | **Styled with Tailwind CSS**
 
 </div>
+
